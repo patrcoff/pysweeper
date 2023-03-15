@@ -1,5 +1,11 @@
 import random
 
+DEBUG = True
+
+def print_if(str):
+    if DEBUG:
+        print(str)
+
 class Cell:
     def __init__(self,ordinate) -> None:
         self.ordinate = ordinate
@@ -11,7 +17,7 @@ class Cell:
         self.is_bomb = True
 
     def explode(self, game):
-        print("boom!")
+        print_if("boom!")
         game.quit()
 
     def to_coordinate(self,x,y):
@@ -22,7 +28,7 @@ class Cell:
     def count_neighbours(self,board):
         #x,y = self.to_coordinate(self.ordinate,board.board_x,board.board_y)
         neighbours = []
-        #print(self.ordinate, self.to_coordinate(board.board_x,board.board_y))
+        #print_if(self.ordinate, self.to_coordinate(board.board_x,board.board_y))
         funcs = [
 
                     lambda x: x - (board.board_x + 1),
@@ -51,7 +57,7 @@ class Cell:
             ord = func(self.ordinate)
             if 0 <= ord < board.get_board_size() and not self.opposite_side(self.ordinate,ord,board):
                 neighbours.append(ord)
-        print(self.ordinate, " - ", self.to_coordinate(board.board_x,board.board_y), " - ", neighbours)
+        print_if(self.ordinate, " - ", self.to_coordinate(board.board_x,board.board_y), " - ", neighbours)
     
     def opposite_side(self,o1,o2,board):
         left_side = [y * board.board_x for y in range(0,board.board_y)]
@@ -81,7 +87,7 @@ class Minefield:
             self.no_of_bombs = int(0.2 * self.board_x * self.board_y) # 20% of board
     
     def populate_bombs(self):
-        #print(self.board)
+        #print_if(self.board)
         for x in range(self.no_of_bombs):
             self.place_bomb()
     
@@ -89,7 +95,7 @@ class Minefield:
         while True:
             x = random.randint(0,self.board_x-1)
             y = random.randint(0,self.board_y-1)
-            print(x,y)
+            print_if(x,y)
             if not self.board[y][x].is_bomb:
                 self.board[y][x].set_bomb()
                 break
@@ -126,4 +132,4 @@ class Minefield:
 test = Minefield(board_size=(13,11))
 
 for row in test.board:
-    print([cell.ordinate for cell in row])
+    print_if([cell.ordinate for cell in row])
