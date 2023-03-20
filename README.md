@@ -2,7 +2,7 @@
 
 To run the game, simply install the requirements (PyGame, Python 3.10+) and run the file 'minepygame.py'. The file 'minesweeper.py' was an early prototype using Tkinter and is much more limited in functionality but helped develop the core logic of generating a board of cells (or minefield of mines).
 
-~~At present, running the program dives straight into a game (only one game, you need to exit to start a new game), including the functionality to left and right click on individual cells to reveal their number of neighbouring bombs / if it is a bomb, or flag the cell. ~~
+~~At present, running the program dives straight into a game (only one game, you need to exit to start a new game), including the functionality to left and right click on individual cells to reveal their number of neighbouring bombs / if it is a bomb, or flag the cell.~~
 
 Currently, the game features very basic menu controls. Upon running the game you are presented with a view showing the word "Paused". 
 A left mouse click will take you to a new game or return to an ongoing game. A right mouse click from the pause menu creates a new game.
