@@ -129,7 +129,8 @@ class Cell(pygame.sprite.Sprite):
                     self.surf = pygame.image.load("img/four.png").convert()
                 case 5:
                     self.surf = pygame.image.load("img/five.png").convert()
-            
+                case 6:
+                    self.surf = pygame.image.load("img/six.png").convert()            
 
         if mouse_btn[2]:
             self.toggle_flag()
@@ -224,7 +225,7 @@ def main():
     cell_size = 20
     SCREEN_WIDTH = X*20  # each cell in the minefield is to occupy a 20x20 pixel space, at least for now - not yet decided on visual aspects so this is liable to change after core gameplay is written and tested
     SCREEN_HEIGHT = Y*20
-
+    colour = (0,0,0)
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     
     def generate_map(x,y):
@@ -292,11 +293,16 @@ def main():
                 running = False
         
         if pygame.mouse.get_pressed()[0]:
+            screen.fill(colour)
+            pygame.display.flip()
             refresh_board(map)
             game = True
         elif pygame.mouse.get_pressed()[2]:
+            screen.fill(colour)
+            pygame.display.flip()
             map = generate_map(X,Y)
             refresh_board(map)
+            
         pygame.display.flip()
         clock.tick(10)
 
