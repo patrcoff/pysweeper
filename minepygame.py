@@ -183,8 +183,8 @@ class Minefield:
                 cell.get_neighbours()
 
     def handle_click(self, mouse_pos, mouse_btn, game):
-
-        self.board[mouse_pos[1]][mouse_pos[0]].unhide(mouse_btn, game)
+        if not self.board[mouse_pos[1]][mouse_pos[0]].clicked and mouse_btn[0]:
+            self.board[mouse_pos[1]][mouse_pos[0]].unhide(mouse_btn, game)
 
     def reset(self,size,diff,square_size):
         self.set_board_size(size[0],size[1])
