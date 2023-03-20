@@ -225,15 +225,23 @@ class Minefield:
 def main():
     pygame.init()
     clock = pygame.time.Clock()
-    x = 20  # to be provided by a menu screen at some point, hardcoded for now as target is core gameplay first
-    y = 20
+    X = 20
+    Y = 20
+    # to be provided by a menu screen at some point, hardcoded for now as target is core gameplay first
+
     cell_size = 20
-    SCREEN_WIDTH = x*20  # each cell in the minefield is to occupy a 20x20 pixel space, at least for now - not yet decided on visual aspects so this is liable to change after core gameplay is written and tested
-    SCREEN_HEIGHT = y*20
+    SCREEN_WIDTH = X*20  # each cell in the minefield is to occupy a 20x20 pixel space, at least for now - not yet decided on visual aspects so this is liable to change after core gameplay is written and tested
+    SCREEN_HEIGHT = Y*20
 
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-    map = Minefield(board_size=(x,y))
-    def refresh_board():
+    
+    def generate_map(x,y):
+        map = Minefield(board_size=(x,y))
+        return map
+
+    def refresh_board(map):#,new):
+        #if new:
+        #    map = generate_map(X,Y)
         for row in map.board:
             for cell in row:
                 x, y = cell.to_coordinate(cell.ordinate)
@@ -246,8 +254,9 @@ def main():
         screen.blit(surf,rect)
         pygame.display.flip()
 
+    map = generate_map(X,Y)
     pause()
-    
+
     running = True
     game = False
     bomb =  None
@@ -292,10 +301,12 @@ def main():
             elif event.type == QUIT:
                 running = False
         
-        if any(pygame.mouse.get_pressed()):
-            refresh_board()
+        if pygame.mouse.get_pressed()[0]:
+            refresh_board(map)#,new = False)
             game = True
-
+        elif pygame.mouse.get_pressed()[2]:
+            map = generate_map(X,Y)
+            refresh_board(map)#,new = True)
         pygame.display.flip()
         clock.tick(10)
 
