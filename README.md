@@ -16,3 +16,7 @@ Clicking on a bomb does not currently end the game, so the current state of the 
 - Missing end game handling (for both lose and win scenarios)
 - [x] There is a bug where clicking the same bomb twice crashes the game - this will be fixed by the previous point
 - There are only number images for 1 - 5, but theoretically up to 8 cell neighbours could be a bomb so need to make these images at some point too.
+
+# An example of a completed game:
+
+![A completed game]/documentation/a_completed_game.PNG
