@@ -296,8 +296,8 @@ def main():
         for event in pygame.event.get():
             if event.type == KEYDOWN:
                 if event.key == K_ESCAPE:
-                    running = False
-                    break
+                    refresh_board(map)#,new = False)
+                    game = True
             elif event.type == QUIT:
                 running = False
         
