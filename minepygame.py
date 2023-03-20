@@ -127,6 +127,8 @@ class Cell(pygame.sprite.Sprite):
                     self.surf = pygame.image.load("img/three.png").convert()
                 case 4:
                     self.surf = pygame.image.load("img/four.png").convert()
+                case 5:
+                    self.surf = pygame.image.load("img/five.png").convert()
             
 
         if mouse_btn[2]:
