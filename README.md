@@ -19,4 +19,4 @@ Clicking on a bomb does not currently end the game, so the current state of the 
 
 # An example of a completed game:
 
-![A completed game]/documentation/a_completed_game.PNG
+![A completed game](/documentation/a_completed_game.PNG)
