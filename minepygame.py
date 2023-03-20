@@ -9,7 +9,7 @@ from pygame.locals import (
 )
 # Initialize pygame
 import random
-DEBUG = True
+DEBUG = False
 
 def print_if(str):
     if DEBUG:
@@ -129,7 +129,8 @@ class Cell(pygame.sprite.Sprite):
                     self.surf = pygame.image.load("img/four.png").convert()
                 case 5:
                     self.surf = pygame.image.load("img/five.png").convert()
-            
+                case 6:
+                    self.surf = pygame.image.load("img/six.png").convert()            
 
         if mouse_btn[2]:
             self.toggle_flag()
@@ -183,8 +184,9 @@ class Minefield:
         while True:
             x = random.randint(0,self.board_x-1)
             y = random.randint(0,self.board_y-1)
-            print_if(f'{x},{y}')
+            print_if(f'{x},{y} - attempting to set bomb')
             if not self.board[y][x].is_bomb:
+                print_if(f'{x},{y} - setting bomb')
                 self.board[y][x].set_bomb()
                 break
 
@@ -213,59 +215,94 @@ class Minefield:
         elif factor < 0:
             return int(x/-factor), int(y/-factor)
 
-
-#def scale(x,y,factor):  # to do: remove this and change calls to it in the mainloop to calls to the scale func of the Minefield instance
-#    '''A helper function to convert the screen coordinate system to the cells/minefield coordinate system, i.e. multiply/divide by no. of pixels in a cell.'''
-#    if factor > 0:
-#        return x*factor,y*factor
-#    elif factor < 0:
-#        return int(x/-factor), int(y/-factor)
-
-
 def main():
     pygame.init()
     clock = pygame.time.Clock()
-    x = 20  # to be provided by a menu screen at some point, hardcoded for now as target is core gameplay first
-    y = 20
+    X = 20
+    Y = 20
+    # to be provided by a menu screen at some point, hardcoded for now as target is core gameplay first
+
     cell_size = 20
-    SCREEN_WIDTH = x*20  # each cell in the minefield is to occupy a 20x20 pixel space, at least for now - not yet decided on visual aspects so this is liable to change after core gameplay is written and tested
-    SCREEN_HEIGHT = y*20
-
+    SCREEN_WIDTH = X*20  # each cell in the minefield is to occupy a 20x20 pixel space, at least for now - not yet decided on visual aspects so this is liable to change after core gameplay is written and tested
+    SCREEN_HEIGHT = Y*20
+    colour = (0,0,0)
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-    map = Minefield(board_size=(x,y))
     
-    for row in map.board:
-        for cell in row:
-            x, y = cell.to_coordinate(cell.ordinate)
-            screen.blit(cell.surf, map.scale(x, y, cell_size))
+    def generate_map(x,y):
+        map = Minefield(board_size=(x,y))
+        return map
 
-    pygame.display.flip()
+    def refresh_board(map):
+        for row in map.board:
+            for cell in row:
+                x, y = cell.to_coordinate(cell.ordinate)
+                screen.blit(cell.surf, map.scale(x, y, cell_size))
+                pygame.display.flip()
+
+    def pause():
+        surf = pygame.image.load("img/paused.png").convert()
+        rect = surf.get_rect()
+        screen.blit(surf,rect)
+        pygame.display.flip()
+
+    map = generate_map(X,Y)
+    pause()
 
     running = True
+    game = False
     bomb =  None
     while running:
-        if bomb:
-            if bomb.explode_frame_count < 4:
-                bomb.explode(screen)
+
+
+        while game:
+            if bomb:
+                if bomb.explode_frame_count < 4:
+                    bomb.explode(screen)
+
+            for event in pygame.event.get():
+                if event.type == KEYDOWN:
+                    if event.key == K_ESCAPE:
+                        pause()
+                        game = False
+
+                elif event.type == QUIT:
+                    running = False
+                    game = False
+
+            if any(pygame.mouse.get_pressed()):
+                x, y = pygame.mouse.get_pos()
+                x_scaled, y_scaled = map.scale(x, y, -cell_size)
+                cell = map.board[y_scaled][x_scaled]
+                print_if(f'{pygame.mouse.get_pos()} - {map.scale(x, y, -cell_size)} - {pygame.mouse.get_pressed()} - attributes - {vars(cell)}')
+                map.handle_click((x_scaled,y_scaled),pygame.mouse.get_pressed(),screen)
+                if map.board[y_scaled][x_scaled].exploded:
+                    bomb = map.board[y_scaled][x_scaled]
+        
+            pygame.display.flip()
+            clock.tick(10)
+
+        if not running:
+            break
 
         for event in pygame.event.get():
             if event.type == KEYDOWN:
                 if event.key == K_ESCAPE:
-                    running = False
+                    refresh_board(map)
+                    game = True
             elif event.type == QUIT:
                 running = False
-        if any(pygame.mouse.get_pressed()):
-            #elif event.type == MOUSEBUTTONDOWN:
-            x, y = pygame.mouse.get_pos()
-            x_scaled, y_scaled = map.scale(x, y, -cell_size)
-            cell = map.board[y_scaled][x_scaled]
-            print_if(f'{pygame.mouse.get_pos()} - {map.scale(x, y, -cell_size)} - {pygame.mouse.get_pressed()} - attributes - {vars(cell)}')
-            map.handle_click((x_scaled,y_scaled),pygame.mouse.get_pressed(),screen)
-            if map.board[y_scaled][x_scaled].exploded:
-                bomb = map.board[y_scaled][x_scaled]
-
-                #screen.blit(map.board[y_scaled][x_scaled].surf, (x, y))
-    
+        
+        if pygame.mouse.get_pressed()[0]:
+            screen.fill(colour)
+            pygame.display.flip()
+            refresh_board(map)
+            game = True
+        elif pygame.mouse.get_pressed()[2]:
+            screen.fill(colour)
+            pygame.display.flip()
+            map = generate_map(X,Y)
+            refresh_board(map)
+            
         pygame.display.flip()
         clock.tick(10)
 
