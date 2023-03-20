@@ -233,17 +233,20 @@ def main():
 
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     map = Minefield(board_size=(x,y))
-    
-    for row in map.board:
-        for cell in row:
-            x, y = cell.to_coordinate(cell.ordinate)
-            screen.blit(cell.surf, map.scale(x, y, cell_size))
-
+    def refresh_board():
+        for row in map.board:
+            for cell in row:
+                x, y = cell.to_coordinate(cell.ordinate)
+                screen.blit(cell.surf, map.scale(x, y, cell_size))
+    refresh_board()
     pygame.display.flip()
 
     running = True
     bomb =  None
     while running:
+
+
+
         if bomb:
             if bomb.explode_frame_count < 4:
                 bomb.explode(screen)
@@ -263,8 +266,9 @@ def main():
             map.handle_click((x_scaled,y_scaled),pygame.mouse.get_pressed(),screen)
             if map.board[y_scaled][x_scaled].exploded:
                 bomb = map.board[y_scaled][x_scaled]
+            #pygame.display.flip()
+            #clock.tick(10)
 
-                #screen.blit(map.board[y_scaled][x_scaled].surf, (x, y))
     
         pygame.display.flip()
         clock.tick(10)
