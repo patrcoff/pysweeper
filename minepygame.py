@@ -238,38 +238,64 @@ def main():
             for cell in row:
                 x, y = cell.to_coordinate(cell.ordinate)
                 screen.blit(cell.surf, map.scale(x, y, cell_size))
-    refresh_board()
-    pygame.display.flip()
+                pygame.display.flip()
 
+    def pause():
+        surf = pygame.image.load("img/paused.png").convert()
+        rect = surf.get_rect()
+        screen.blit(surf,rect)
+        pygame.display.flip()
+
+    pause()
+    
     running = True
+    game = False
     bomb =  None
     while running:
 
 
+        while game:
+            if bomb:
+                if bomb.explode_frame_count < 4:
+                    bomb.explode(screen)
 
-        if bomb:
-            if bomb.explode_frame_count < 4:
-                bomb.explode(screen)
+            for event in pygame.event.get():
+                if event.type == KEYDOWN:
+                    if event.key == K_ESCAPE:
+                        pause()
+                        game = False
+
+                elif event.type == QUIT:
+                    running = False
+                    game = False
+
+            if any(pygame.mouse.get_pressed()):
+                x, y = pygame.mouse.get_pos()
+                x_scaled, y_scaled = map.scale(x, y, -cell_size)
+                cell = map.board[y_scaled][x_scaled]
+                print_if(f'{pygame.mouse.get_pos()} - {map.scale(x, y, -cell_size)} - {pygame.mouse.get_pressed()} - attributes - {vars(cell)}')
+                map.handle_click((x_scaled,y_scaled),pygame.mouse.get_pressed(),screen)
+                if map.board[y_scaled][x_scaled].exploded:
+                    bomb = map.board[y_scaled][x_scaled]
+        
+            pygame.display.flip()
+            clock.tick(10)
+
+        if not running:
+            break
 
         for event in pygame.event.get():
             if event.type == KEYDOWN:
                 if event.key == K_ESCAPE:
                     running = False
+                    break
             elif event.type == QUIT:
                 running = False
+        
         if any(pygame.mouse.get_pressed()):
-            #elif event.type == MOUSEBUTTONDOWN:
-            x, y = pygame.mouse.get_pos()
-            x_scaled, y_scaled = map.scale(x, y, -cell_size)
-            cell = map.board[y_scaled][x_scaled]
-            print_if(f'{pygame.mouse.get_pos()} - {map.scale(x, y, -cell_size)} - {pygame.mouse.get_pressed()} - attributes - {vars(cell)}')
-            map.handle_click((x_scaled,y_scaled),pygame.mouse.get_pressed(),screen)
-            if map.board[y_scaled][x_scaled].exploded:
-                bomb = map.board[y_scaled][x_scaled]
-            #pygame.display.flip()
-            #clock.tick(10)
+            refresh_board()
+            game = True
 
-    
         pygame.display.flip()
         clock.tick(10)
 
