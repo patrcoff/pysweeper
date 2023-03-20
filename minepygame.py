@@ -27,6 +27,7 @@ class Cell(pygame.sprite.Sprite):
         self.parent = parent
         self.is_bomb = False
         self.clicked = False
+        self.flagged = False
         self.neighbours = -1
         self.exploded = False
         self.explode_frame_count = 0
@@ -107,7 +108,7 @@ class Cell(pygame.sprite.Sprite):
 
     def unhide(self,mouse_btn,screen):
         self.clicked = True
-        print_if(self.ordinate)
+        print_if(f'{self.ordinate} - btn - {mouse_btn}')
         if self.is_bomb and mouse_btn[0]: #leftclick
             self.explode(screen)
         if (not self.is_bomb) and mouse_btn[0]:
@@ -131,10 +132,20 @@ class Cell(pygame.sprite.Sprite):
             
 
         if mouse_btn[2]:
-            self.surf = pygame.image.load("img/flag.png").convert()
+            self.toggle_flag()
+
         self.surf.set_colorkey((255, 255, 255), RLEACCEL)
         self.rect = self.surf.get_rect()
         self.render(screen)
+
+    def toggle_flag(self):
+        if self.flagged:
+            self.flagged = False
+            self.clicked = False
+            self.surf = pygame.image.load("img/earth.png").convert()
+        else:
+            self.flagged = True
+            self.surf = pygame.image.load("img/flag.png").convert()
         
     def render(self, screen):
         x , y = self.to_coordinate(self.ordinate) 
@@ -183,7 +194,9 @@ class Minefield:
                 cell.get_neighbours()
 
     def handle_click(self, mouse_pos, mouse_btn, game):
-        if not self.board[mouse_pos[1]][mouse_pos[0]].clicked and mouse_btn[0]:
+        if self.board[mouse_pos[1]][mouse_pos[0]].clicked and mouse_btn[0]:
+            return
+        else:
             self.board[mouse_pos[1]][mouse_pos[0]].unhide(mouse_btn, game)
 
     def reset(self,size,diff,square_size):
@@ -241,13 +254,15 @@ def main():
                     running = False
             elif event.type == QUIT:
                 running = False
-            elif event.type == MOUSEBUTTONDOWN:
-                x, y = pygame.mouse.get_pos()
-                print_if(f'{pygame.mouse.get_pos()} - {map.scale(x, y, -cell_size)} - {pygame.mouse.get_pressed()}')
-                x_scaled, y_scaled = map.scale(x, y, -cell_size)
-                map.handle_click((x_scaled,y_scaled),pygame.mouse.get_pressed(),screen)
-                if map.board[y_scaled][x_scaled].exploded:
-                    bomb = map.board[y_scaled][x_scaled]
+        if any(pygame.mouse.get_pressed()):
+            #elif event.type == MOUSEBUTTONDOWN:
+            x, y = pygame.mouse.get_pos()
+            x_scaled, y_scaled = map.scale(x, y, -cell_size)
+            cell = map.board[y_scaled][x_scaled]
+            print_if(f'{pygame.mouse.get_pos()} - {map.scale(x, y, -cell_size)} - {pygame.mouse.get_pressed()} - attributes - {vars(cell)}')
+            map.handle_click((x_scaled,y_scaled),pygame.mouse.get_pressed(),screen)
+            if map.board[y_scaled][x_scaled].exploded:
+                bomb = map.board[y_scaled][x_scaled]
 
                 #screen.blit(map.board[y_scaled][x_scaled].surf, (x, y))
     
