@@ -52,7 +52,6 @@ class Cell(pygame.sprite.Sprite):
     def get_neighbours(self):
         self.neighbours = []
         funcs = [
-
                     lambda x: x - (self.parent.board_x + 1),
                     lambda x: x - self.parent.board_x,
                     lambda x: x - (self.parent.board_x - 1),
