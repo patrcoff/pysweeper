@@ -1,44 +1,66 @@
-import random
+import pygame
 
+from pygame.locals import (
+    K_ESCAPE,
+    MOUSEBUTTONDOWN,
+    KEYDOWN,
+    QUIT,
+    RLEACCEL,
+)
+# Initialize pygame
+import random
 DEBUG = True
 
 def print_if(str):
     if DEBUG:
         print(str)
 
-class Cell:
-    def __init__(self,ordinate) -> None:
+class Cell(pygame.sprite.Sprite):
+    '''An individual cell in the minefield, with methods to handle detection of bombs and counting bombs in neighbouring cells. Inherits from Sprite class to handle rendering to screen.'''
+    
+    def __init__(self,ordinate,parent,square_size) -> None:
+        super(Cell, self).__init__()
+        self.surf = self.surf = pygame.image.load("img/earth.png").convert()
+        self.rect = self.surf.get_rect()
+        self.square_size = square_size
         self.ordinate = ordinate
+        self.parent = parent
         self.is_bomb = False
         self.clicked = False
         self.neighbours = -1
+        self.exploded = False
+        self.explode_frame_count = 0
     
     def set_bomb(self):
         self.is_bomb = True
 
-    def explode(self, game):
+    def explode(self,screen):
         print_if("boom!")
-        game.quit()
+        self.exploded = True
+        self.exploded_images = ["img/bomb1.png","img/bomb2.png","img/bomb3.png","img/bomb4.png"]
+        self.surf = pygame.image.load(self.exploded_images[self.explode_frame_count]).convert()
+        self.explode_frame_count += 1        
+        self.rect = self.surf.get_rect()
+        self.render(screen)
+        #game.quit()
 
-    def to_coordinate(self,x,y):
-        y1 = self.ordinate // y
-        x1 = self.ordinate % x
+    def to_coordinate(self,ord):
+        y1 = ord // self.parent.board_y
+        x1 = ord % self.parent.board_x
         return x1, y1
 
-    def count_neighbours(self,board):
-        #x,y = self.to_coordinate(self.ordinate,board.board_x,board.board_y)
-        neighbours = []
-        #print_if(self.ordinate, self.to_coordinate(board.board_x,board.board_y))
+    def get_neighbours(self):
+        self.neighbours = []
         funcs = [
 
-                    lambda x: x - (board.board_x + 1),
-                    lambda x: x - board.board_x,
-                    lambda x: x - (board.board_x - 1),
+                    lambda x: x - (self.parent.board_x + 1),
+                    lambda x: x - self.parent.board_x,
+                    lambda x: x - (self.parent.board_x - 1),
                     lambda x: x - 1,
                     lambda x: x + 1,
-                    lambda x: x + (board.board_x - 1),
-                    lambda x: x + board.board_x,
-                    lambda x: x + (board.board_x + 1)
+                    lambda x: x + (self.parent.board_x - 1),
+                    lambda x: x + self.parent.board_x,
+                    lambda x: x + (self.parent.board_x + 1)
                 ]
         for func in funcs:
             # sides
@@ -55,27 +77,81 @@ class Cell:
             # + x
             # + (x + 1)
             ord = func(self.ordinate)
-            if 0 <= ord < board.get_board_size() and not self.opposite_side(self.ordinate,ord,board):
-                neighbours.append(ord)
-        print_if(self.ordinate, " - ", self.to_coordinate(board.board_x,board.board_y), " - ", neighbours)
+            if 0 <= ord < self.parent.get_board_area() and not self.opposite_side(self.ordinate,ord):
+                self.neighbours.append(ord)
+        print_if(f'{self.ordinate} - {self.to_coordinate(ord)} - {self.neighbours}')
+        return self.neighbours
     
-    def opposite_side(self,o1,o2,board):
-        left_side = [y * board.board_x for y in range(0,board.board_y)]
-        right_side = [y * board.board_x + board.board_x - 1 for y in range(0,board.board_y)]
+    def opposite_side(self,o1,o2):
+        left_side = [y * self.parent.board_x for y in range(0,self.parent.board_y)]
+        right_side = [y * self.parent.board_x + self.parent.board_x - 1 for y in range(0,self.parent.board_y)]
         if (o1 in left_side and o2 in right_side) or (o1 in right_side and o2 in left_side):
             return True
         return False
 
+    def count_neighbours(self):
+        neighbours_count = 0
+        for cell_ref in self.neighbours:
+            print_if(f'cell_ref: {cell_ref}')
+            x, y = self.to_coordinate(cell_ref)
+            cell = self.parent.board[y][x]
+            neighbours_count += int(cell.is_bomb)
+        return neighbours_count
+
+    def recursive_unhide_neighbours(self,screen):
+        for cell_ref in self.neighbours:
+            x, y = self.to_coordinate(cell_ref)
+            cell = self.parent.board[y][x]
+            if not cell.clicked:
+                cell.unhide((True,False,False),screen)
+        return
+
+    def unhide(self,mouse_btn,screen):
+        self.clicked = True
+        print_if(self.ordinate)
+        if self.is_bomb and mouse_btn[0]: #leftclick
+            self.explode(screen)
+        if (not self.is_bomb) and mouse_btn[0]:
+            print_if('entered clicked')
+            
+            neighbours_count = self.count_neighbours()
+            match neighbours_count:
+                case 0:
+                    self.surf = pygame.image.load("img/zero.png").convert()
+                    self.recursive_unhide_neighbours(screen)
+                case 1:
+                    self.surf = pygame.image.load("img/one.png").convert()
+                case 2:
+                    self.surf = pygame.image.load("img/two.png").convert()
+                case 3:
+                    self.surf = pygame.image.load("img/three.png").convert()
+                case 4:
+                    self.surf = pygame.image.load("img/four.png").convert()
+            
+
+        if mouse_btn[2]:
+            self.surf = pygame.image.load("img/flag.png").convert()
+        self.surf.set_colorkey((255, 255, 255), RLEACCEL)
+        self.rect = self.surf.get_rect()
+        self.render(screen)
+        
+    def render(self, screen):
+        x , y = self.to_coordinate(self.ordinate) 
+        screen.blit(self.surf, self.parent.scale(x, y, self.square_size))
+
+
 class Minefield:
-    def __init__(self,board_size = (10,10),difficulty = "medium") -> None:
-        self.reset(size = board_size,diff = difficulty)
+    '''The main game map or \'minefield\' class, handles setting up the board, generating the cells and randomly placing bombs in a certain proportion of cells.'''
+
+    def __init__(self,board_size = (10,10),difficulty = "medium", square_size = 20) -> None:  # here we should take cell size in from outside and calculate square_size (for displaying the cell itself) from it
+        self.reset(size = board_size,diff = difficulty, square_size = square_size)            # unless we are only using images with no borders between them - let's see what that looks like...
 
     def set_board_size(self,x,y):
         self.board_size  = (x,y)
         self.board_x = self.board_size[0]
         self.board_y = self.board_size[1]
 
-    def get_board_size(self):
+    def get_board_area(self):
         return self.board_x * self.board_y
 
     def calculate_bombs(self,difficulty):
@@ -95,41 +171,89 @@ class Minefield:
         while True:
             x = random.randint(0,self.board_x-1)
             y = random.randint(0,self.board_y-1)
-            print_if(x,y)
+            print_if(f'{x},{y}')
             if not self.board[y][x].is_bomb:
                 self.board[y][x].set_bomb()
                 break
 
-    def count_neighbours(self):
+    def get_neighbours(self):
         for row in self.board:
             for cell in row:
-                cell.count_neighbours(self)
+                cell.get_neighbours()
 
-    def reset(self,size,diff):
+    def handle_click(self, mouse_pos, mouse_btn, game):
+
+        self.board[mouse_pos[1]][mouse_pos[0]].unhide(mouse_btn, game)
+
+    def reset(self,size,diff,square_size):
         self.set_board_size(size[0],size[1])
         self.calculate_bombs(diff)
-        self.board = [ [ Cell(ordinate=(x + (size[0] * y))) for x in range(0,size[0]) ] for y in range(0,size[1]) ]
+        self.board = [ [ Cell((x + (size[0] * y)),self,square_size) for x in range(0,size[0]) ] for y in range(0,size[1]) ]
         self.populate_bombs()
-        self.count_neighbours()
+        self.get_neighbours()
+
+    def scale(self,x,y,factor):
+        '''A helper function to convert the screen coordinate system to the cells/minefield coordinate system, i.e. multiply/divide by no. of pixels in a cell.'''
+        if factor > 0:
+            return x*factor,y*factor
+        elif factor < 0:
+            return int(x/-factor), int(y/-factor)
 
 
+#def scale(x,y,factor):  # to do: remove this and change calls to it in the mainloop to calls to the scale func of the Minefield instance
+#    '''A helper function to convert the screen coordinate system to the cells/minefield coordinate system, i.e. multiply/divide by no. of pixels in a cell.'''
+#    if factor > 0:
+#        return x*factor,y*factor
+#    elif factor < 0:
+#        return int(x/-factor), int(y/-factor)
 
 
+def main():
+    pygame.init()
+    clock = pygame.time.Clock()
+    x = 20  # to be provided by a menu screen at some point, hardcoded for now as target is core gameplay first
+    y = 20
+    cell_size = 20
+    SCREEN_WIDTH = x*20  # each cell in the minefield is to occupy a 20x20 pixel space, at least for now - not yet decided on visual aspects so this is liable to change after core gameplay is written and tested
+    SCREEN_HEIGHT = y*20
+
+    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    map = Minefield(board_size=(x,y))
+    
+    for row in map.board:
+        for cell in row:
+            x, y = cell.to_coordinate(cell.ordinate)
+            screen.blit(cell.surf, map.scale(x, y, cell_size))
+
+    pygame.display.flip()
+
+    running = True
+    bomb =  None
+    while running:
+        if bomb:
+            if bomb.explode_frame_count < 4:
+                bomb.explode(screen)
+
+        for event in pygame.event.get():
+            if event.type == KEYDOWN:
+                if event.key == K_ESCAPE:
+                    running = False
+            elif event.type == QUIT:
+                running = False
+            elif event.type == MOUSEBUTTONDOWN:
+                x, y = pygame.mouse.get_pos()
+                print_if(f'{pygame.mouse.get_pos()} - {map.scale(x, y, -cell_size)} - {pygame.mouse.get_pressed()}')
+                x_scaled, y_scaled = map.scale(x, y, -cell_size)
+                map.handle_click((x_scaled,y_scaled),pygame.mouse.get_pressed(),screen)
+                if map.board[y_scaled][x_scaled].exploded:
+                    bomb = map.board[y_scaled][x_scaled]
+
+                #screen.blit(map.board[y_scaled][x_scaled].surf, (x, y))
+    
+        pygame.display.flip()
+        clock.tick(10)
+
+if __name__ == "__main__":
+    main()
 
 
-
-
-
-
-
-
-
-
-
-
-
-#--------------------------------------------
-test = Minefield(board_size=(13,11))
-
-for row in test.board:
-    print_if([cell.ordinate for cell in row])
