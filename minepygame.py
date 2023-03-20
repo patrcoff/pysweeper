@@ -9,7 +9,7 @@ from pygame.locals import (
 )
 # Initialize pygame
 import random
-DEBUG = True
+DEBUG = False
 
 def print_if(str):
     if DEBUG:
@@ -183,8 +183,9 @@ class Minefield:
         while True:
             x = random.randint(0,self.board_x-1)
             y = random.randint(0,self.board_y-1)
-            print_if(f'{x},{y}')
+            print_if(f'{x},{y} - attempting to set bomb')
             if not self.board[y][x].is_bomb:
+                print_if(f'{x},{y} - setting bomb')
                 self.board[y][x].set_bomb()
                 break
 
@@ -213,15 +214,6 @@ class Minefield:
         elif factor < 0:
             return int(x/-factor), int(y/-factor)
 
-
-#def scale(x,y,factor):  # to do: remove this and change calls to it in the mainloop to calls to the scale func of the Minefield instance
-#    '''A helper function to convert the screen coordinate system to the cells/minefield coordinate system, i.e. multiply/divide by no. of pixels in a cell.'''
-#    if factor > 0:
-#        return x*factor,y*factor
-#    elif factor < 0:
-#        return int(x/-factor), int(y/-factor)
-
-
 def main():
     pygame.init()
     clock = pygame.time.Clock()
@@ -239,9 +231,7 @@ def main():
         map = Minefield(board_size=(x,y))
         return map
 
-    def refresh_board(map):#,new):
-        #if new:
-        #    map = generate_map(X,Y)
+    def refresh_board(map):
         for row in map.board:
             for cell in row:
                 x, y = cell.to_coordinate(cell.ordinate)
@@ -296,17 +286,17 @@ def main():
         for event in pygame.event.get():
             if event.type == KEYDOWN:
                 if event.key == K_ESCAPE:
-                    refresh_board(map)#,new = False)
+                    refresh_board(map)
                     game = True
             elif event.type == QUIT:
                 running = False
         
         if pygame.mouse.get_pressed()[0]:
-            refresh_board(map)#,new = False)
+            refresh_board(map)
             game = True
         elif pygame.mouse.get_pressed()[2]:
             map = generate_map(X,Y)
-            refresh_board(map)#,new = True)
+            refresh_board(map)
         pygame.display.flip()
         clock.tick(10)
 
