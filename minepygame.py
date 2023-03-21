@@ -16,7 +16,22 @@ def print_if(str):
         print(str)
 
 class Cell(pygame.sprite.Sprite):
-    '''An individual cell in the minefield, with methods to handle detection of bombs and counting bombs in neighbouring cells. Inherits from Sprite class to handle rendering to screen.'''
+    '''
+    An individual cell in the minefield. Inherits from Sprite class to handle rendering to screen.
+
+    Each cell can be thought of as a tile in the minesweeper board, and can be set, or armed as a bomb.
+    Methods are available to allow for calculating neighbouring bombs and revealing the cell/tile when clicked.
+    If a cell is clicked which has 0 bomb neighbours, it will recursively reveal all neighbouring cells up to
+    a perimeter of non-zero cells. Othwerise it reveals the number of neighbouring cells containing bombs.
+    If it is a bomb, the bomb animation plays - at time of writing, the bombs do not cause an end-game event.
+
+    The Cell and Minefield classes are heavily intertwined and one does not really ever exist without the other
+    As such, you will see in the doctests contained within these docstrings that I am instantiating a Minefield
+    instance in order to access the Cell instances so that they have access to their parent object 
+    (not in the inheritence meaning of the term) - which is generally required in most method calls.
+    In practice, instantiating the Minefield class instantiates all required Cell objects needed.
+    Cell objects have a required argument of parent so it is not possible to instantiate a Cell without a Minefield
+    '''
     
     def __init__(self,ordinate,parent,square_size) -> None:
         super(Cell, self).__init__()
@@ -33,6 +48,22 @@ class Cell(pygame.sprite.Sprite):
         self.explode_frame_count = 0
     
     def set_bomb(self):
+        '''
+        Sets the cell is_bomb boolean to True
+
+        Example
+        -------
+        >>> from minepygame import Cell, Minefield
+        >>> screen = pygame.display.set_mode((20, 20))
+        >>> parent = Minefield() # default size is 10x10 cells
+        >>> cell = Cell(1000,parent,20)
+        >>> cell.is_bomb
+        False
+        >>> cell.set_bomb()
+        >>> cell.is_bomb
+        True
+        
+        '''
         self.is_bomb = True
 
     def explode(self,screen):
@@ -46,11 +77,39 @@ class Cell(pygame.sprite.Sprite):
         #game.quit()
 
     def to_coordinate(self,ord):
+        '''Returns the coordinate values for a given ordinate value relative to the x and y max values specified in the parent object
+        
+        Example
+        -------
+        >>> from minepygame import Cell, Minefield
+        >>> screen = pygame.display.set_mode((20, 20))
+        >>> parent = Minefield() # default size is 10x10 cells
+        >>> cell1 = parent.board[0][0]
+        >>> cell1.ordinate
+        0
+        >>> cell1.to_coordinate(cell1.ordinate)
+        (0, 0)
+        
+        '''
         y1 = ord // self.parent.board_y
         x1 = ord % self.parent.board_x
         return x1, y1
 
     def get_neighbours(self):
+        '''
+        Populates a list of neighbours to the calling cell
+        
+        Example
+        -------
+        >>> from minepygame import Cell, Minefield
+        >>> screen = pygame.display.set_mode((20, 20))
+        >>> parent = Minefield() # default size is 10x10 cells
+        >>> cell1 = parent.board[0][0]
+        >>> cell1.ordinate
+        0
+        >>> cell1.get_neighbours()
+        [1, 10, 11]
+        '''
         self.neighbours = []
         funcs = [
                     lambda x: x - (self.parent.board_x + 1),
@@ -67,12 +126,12 @@ class Cell(pygame.sprite.Sprite):
             # - 1
             # + 1
             
-            #above
+            # above
             # -(x + 1)
             # - x
             # - (x -1)
 
-            #below
+            # below
             # + (x - 1)
             # + x
             # + (x + 1)
@@ -83,6 +142,31 @@ class Cell(pygame.sprite.Sprite):
         return self.neighbours
     
     def opposite_side(self,o1,o2):
+        '''
+        Takes two ordinate cell references (int) and checks if they are on opposite sides of the board.
+
+        This is necessary in order to exclude cells which are one ordinate away from the cell checking its neighbours
+        but actually exist on the other side of the board and are thus not neighbours. This is due to the layout of cells:
+
+        0   1  2  3  4
+        5   6  7  8  9
+        10 11 12 13 14 - where 5 is not a neighbour to 4 for example.
+        
+        Example
+        -------
+        >>> from minepygame import Cell, Minefield
+        >>> screen = pygame.display.set_mode((20, 20))
+        >>> parent = Minefield() # default size is 10x10 cells
+        >>> cell1 = parent.board[0][0]
+        >>> cell1.ordinate
+        0
+        >>> cell2 = parent.board[9][9]
+        >>> cell2.ordinate
+        99
+        >>> cell1.opposite_side(cell1.ordinate,cell2.ordinate)
+        True
+        '''
+                
         left_side = [y * self.parent.board_x for y in range(0,self.parent.board_y)]
         right_side = [y * self.parent.board_x + self.parent.board_x - 1 for y in range(0,self.parent.board_y)]
         if (o1 in left_side and o2 in right_side) or (o1 in right_side and o2 in left_side):
@@ -90,6 +174,18 @@ class Cell(pygame.sprite.Sprite):
         return False
 
     def count_neighbours(self):
+        '''
+        Counts the number of neighbouring cells which contain bombs
+        
+        Example
+        -------
+        >>> from minepygame import Cell, Minefield
+        >>> screen = pygame.display.set_mode((20, 20))
+        >>> parent = Minefield() # default size is 10x10 cells
+        >>> cell = parent.board[1][1]
+        >>> 0 <= cell.count_neighbours() <= 8
+        True
+        '''
         neighbours_count = 0
         for cell_ref in self.neighbours:
             print_if(f'cell_ref: {cell_ref}')
@@ -140,6 +236,20 @@ class Cell(pygame.sprite.Sprite):
         self.render(screen)
 
     def toggle_flag(self):
+        '''
+        Toggles the cell image between default unclicked background and the flag image.
+
+        Example
+        -------
+        >>> from minepygame import Cell, Minefield
+        >>> screen = pygame.display.set_mode((20, 20))
+        >>> parent = Minefield()
+        >>> cell = Cell(5,parent,20)
+        >>> cell.flagged = True
+        >>> cell.toggle_flag()
+        >>> cell.flagged
+        False
+        '''
         if self.flagged:
             self.flagged = False
             self.clicked = False
@@ -209,7 +319,23 @@ class Minefield:
         self.get_neighbours()
 
     def scale(self,x,y,factor):
-        '''A helper function to convert the screen coordinate system to the cells/minefield coordinate system, i.e. multiply/divide by no. of pixels in a cell.'''
+        '''A helper function to convert the screen coordinate system to the cells/minefield coordinate system
+        i.e. multiply/divide by no. of pixels in a cell.
+        
+        Using a positive factor will return x and y multiplied by said factor
+        Using a negative factor will return x and y divided by said factor
+
+        Example
+        -------
+        >>> from minepygame import Cell, Minefield
+        >>> screen = pygame.display.set_mode((20, 20))
+        >>> map = Minefield()     
+        >>> map.scale(5,5,10)
+        (50, 50)
+        >>> map.scale(50,50,-10)
+        (5, 5)
+
+        '''
         if factor > 0:
             return x*factor,y*factor
         elif factor < 0:
@@ -308,5 +434,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
