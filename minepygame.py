@@ -267,12 +267,16 @@ class Minefield:
     '''The main game map or \'minefield\' class, handles setting up the board, generating the cells and randomly placing bombs in a certain proportion of cells.'''
 
     def __init__(self,board_size = (10,10),difficulty = "medium", square_size = 20) -> None:  # here we should take cell size in from outside and calculate square_size (for displaying the cell itself) from it
-        self.reset(size = board_size,diff = difficulty, square_size = square_size)            # unless we are only using images with no borders between them - let's see what that looks like...
+        self.difficulty = difficulty
+        self.square_size = square_size
+        x, y = board_size
+        self.set_board_size(x, y)
+        self.reset()
 
     def set_board_size(self,x,y):
         self.board_size  = (x,y)
-        self.board_x = self.board_size[0]
-        self.board_y = self.board_size[1]
+        self.board_x, self.board_y = self.board_size
+        
 
     def get_board_area(self):
         return self.board_x * self.board_y
@@ -306,15 +310,16 @@ class Minefield:
                 cell.get_neighbours()
 
     def handle_click(self, mouse_pos, mouse_btn, game):
-        if self.board[mouse_pos[1]][mouse_pos[0]].clicked and mouse_btn[0]:
+        x, y = mouse_pos
+        if self.board[y][x].clicked and mouse_btn[0]:
             return
         else:
-            self.board[mouse_pos[1]][mouse_pos[0]].unhide(mouse_btn, game)
+            self.board[y][x].unhide(mouse_btn, game)
 
-    def reset(self,size,diff,square_size):
-        self.set_board_size(size[0],size[1])
-        self.calculate_bombs(diff)
-        self.board = [ [ Cell((x + (size[0] * y)),self,square_size) for x in range(0,size[0]) ] for y in range(0,size[1]) ]
+    def reset(self):
+        #x_max, y_max = self.board_size
+        self.calculate_bombs(self.difficulty)
+        self.board = [ [ Cell((x + (self.board_x * y)),self,self.square_size) for x in range(0,self.board_y) ] for y in range(0,self.board_y) ]
         self.populate_bombs()
         self.get_neighbours()
 
@@ -394,7 +399,7 @@ def main():
                 elif event.type == QUIT:
                     running = False
                     game = False
-
+            
             if any(pygame.mouse.get_pressed()):
                 x, y = pygame.mouse.get_pos()
                 x_scaled, y_scaled = map.scale(x, y, -cell_size)
@@ -417,16 +422,20 @@ def main():
                     game = True
             elif event.type == QUIT:
                 running = False
-        
-        if pygame.mouse.get_pressed()[0]:
+
+        LEFT = pygame.mouse.get_pressed()[0]
+        RIGHT = pygame.mouse.get_pressed()[2]
+
+        if LEFT:
             screen.fill(colour)
             pygame.display.flip()
             refresh_board(map)
             game = True
-        elif pygame.mouse.get_pressed()[2]:
+        elif RIGHT:
             screen.fill(colour)
             pygame.display.flip()
-            map = generate_map(X,Y)
+            map.reset()
+            #map = generate_map(X,Y)
             refresh_board(map)
             
         pygame.display.flip()
