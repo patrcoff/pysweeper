@@ -13,7 +13,7 @@ Clicking on a bomb does not currently end the game, so the current state of the 
 # The game currently has the following missing features / existing bugs:
 
 - [x] Missing ability to toggle flags
-- Missing end game handling (for both lose and win scenarios)
+- [ ] Missing end game handling (for both lose and win scenarios)
 - [x] There is a bug where clicking the same bomb twice crashes the game - this will be fixed by the previous point
 - [ ] There are only number images for 1 - 5, but theoretically up to 8 cell neighbours could be a bomb so need to make these images at some point too.
 
