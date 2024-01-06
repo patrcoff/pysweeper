@@ -1,3 +1,14 @@
+> [!NOTE]
+> This project is unfinished.
+> It was created as part of self education fairly long ago and is not intended for public use.
+> I am keeping all of my old self-education projects public for transparancy and posterity.
+> I do not recommend attempting to deploy this software in the real world and while it can be
+> used to track my personal and professional progress, it should not be seen as a good example
+> of coding or devops best practice. As such, I do not recommend beginers use this project for
+> educational purposes or guidance.
+> In particular, this project makes very bad use of classes and objects. I may revisit this in
+> the future to refactor it into better code, but I may not...
+
 # PySweeper
 
 To run the game, simply install the requirements (PyGame, Python 3.10+) and run the file 'minepygame.py'. The file 'minesweeper.py' was an early prototype using Tkinter and is much more limited in functionality but helped develop the core logic of generating a board of cells (or minefield of mines).
